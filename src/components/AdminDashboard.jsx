@@ -3,6 +3,7 @@ import { useState } from 'react'
 import AdminLayout from './admin/AdminLayout'
 import AdminHome from './admin/AdminHome'
 import AdminClients from './admin/AdminClients'
+import AdminClientDetails from './admin/AdminClientDetails'
 import AdminWorkflows from './admin/AdminWorkflows'
 import AdminSettings from './admin/AdminSettings'
 
@@ -15,6 +16,7 @@ const AdminDashboard = () => {
         <Route path="/" element={<Navigate to="/admin/home" replace />} />
         <Route path="/home" element={<AdminHome />} />
         <Route path="/clients" element={<AdminClients />} />
+        <Route path="/clients/:clientId" element={<AdminClientDetails />} />
         <Route path="/workflows" element={<AdminWorkflows />} />
         <Route path="/settings" element={<AdminSettings />} />
       </Routes>
@@ -33,4 +35,3 @@ function customizeClientDashboard(clientId, layout, widgets) {
 
 // Example usage of the new function
 customizeClientDashboard('client123', 'grid', ['widget1', 'widget2']);
-

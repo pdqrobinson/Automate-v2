@@ -1,3 +1,4 @@
+import { Link, useLocation } from 'react-router-dom'
 import { useAuth } from '../../App'
 import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
@@ -5,17 +6,27 @@ import {
   Home, 
   LogOut, 
   Menu,
-  ArrowLeft
+  ArrowLeft,
+  MessageSquare,
+  DollarSign
 } from 'lucide-react'
+import { cn } from '@/lib/utils'
 
 const ClientLayout = ({ children, sidebarOpen, setSidebarOpen }) => {
   const { user, logout, isImpersonating, impersonatedClient } = useAuth()
+  const location = useLocation()
 
   const handleLogout = () => {
     logout()
   }
 
   const currentUser = isImpersonating ? impersonatedClient : user
+
+  const navigation = [
+    { name: 'Dashboard', href: '/client/home', icon: Home },
+    { name: 'Communication', href: '/client/communication', icon: MessageSquare },
+    { name: 'Billing', href: '/client/billing', icon: DollarSign },
+  ]
 
   const SidebarContent = () => (
     <div className="flex h-full flex-col">
@@ -36,10 +47,26 @@ const ClientLayout = ({ children, sidebarOpen, setSidebarOpen }) => {
       )}
       
       <nav className="flex-1 space-y-1 p-4">
-        <div className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium bg-primary text-primary-foreground">
-          <Home className="w-4 h-4" />
-          Dashboard
-        </div>
+        {navigation.map((item) => {
+          const Icon = item.icon
+          const isActive = location.pathname === item.href
+          
+          return (
+            <Link
+              key={item.name}
+              to={item.href}
+              className={cn(
+                'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
+                isActive
+                  ? 'bg-primary text-primary-foreground'
+                  : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
+              )}
+            >
+              <Icon className="w-4 h-4" />
+              {item.name}
+            </Link>
+          )
+        })}
       </nav>
       
       <div className="border-t p-4">
@@ -108,4 +135,3 @@ const ClientLayout = ({ children, sidebarOpen, setSidebarOpen }) => {
 }
 
 export default ClientLayout
-

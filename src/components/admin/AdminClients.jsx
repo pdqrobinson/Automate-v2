@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../App'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -31,7 +32,9 @@ import {
   UserCheck,
   Workflow,
   Mail,
-  Phone
+  Phone,
+  Eye,
+  Settings
 } from 'lucide-react'
 import {
   DropdownMenu,
@@ -43,6 +46,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 
 const AdminClients = () => {
+  const navigate = useNavigate()
   const { startImpersonation } = useAuth()
   const [searchTerm, setSearchTerm] = useState('')
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
@@ -132,6 +136,10 @@ const AdminClients = () => {
 
   const handleDeleteClient = (clientId) => {
     setClients(clients.filter(client => client.id !== clientId))
+  }
+
+  const handleViewDetails = (clientId) => {
+    navigate(`/admin/clients/${clientId}`)
   }
 
   return (
@@ -285,6 +293,10 @@ const AdminClients = () => {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                        <DropdownMenuItem onClick={() => handleViewDetails(client.id)}>
+                          <Eye className="mr-2 h-4 w-4" />
+                          View Details
+                        </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => handleImpersonate(client)}>
                           <UserCheck className="mr-2 h-4 w-4" />
                           Impersonate
@@ -319,4 +331,3 @@ const AdminClients = () => {
 }
 
 export default AdminClients
-

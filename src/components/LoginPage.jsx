@@ -1,31 +1,44 @@
 import { useState } from 'react'
-import { useAuth } from '../App'
+import { useAuth } from '../hooks/useAuth'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Label } from '@/components/ui/label'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Settings, Users } from 'lucide-react'
+import { Settings, Users, AlertCircle } from 'lucide-react'
+import { Alert, AlertDescription } from '@/components/ui/alert'
 
 const LoginPage = () => {
-  const { login } = useAuth()
-  const [credentials, setCredentials] = useState({ email: '', password: '' })
+  const { login, register } = useAuth()
+  const [credentials, setCredentials] = useState({ email: '', password: '', name: '' })
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+  const [activeTab, setActiveTab] = useState('login')
 
   const handleLogin = async (role) => {
     setLoading(true)
+    setError('')
     
-    // Simulate API call
-    setTimeout(() => {
-      const userData = {
-        id: role === 'admin' ? 1 : 2,
-        email: credentials.email,
-        role: role,
-        name: role === 'admin' ? 'Admin User' : 'Client User'
-      }
-      login(userData)
+    try {
+      await login(credentials.email, credentials.password)
+    } catch (error) {
+      setError(error.message || 'Login failed. Please check your credentials.')
+    } finally {
       setLoading(false)
-    }, 1000)
+    }
+  }
+
+  const handleRegister = async (role) => {
+    setLoading(true)
+    setError('')
+    
+    try {
+      await register(credentials.email, credentials.password, credentials.name, role)
+    } catch (error) {
+      setError(error.message || 'Registration failed. Please try again.')
+    } finally {
+      setLoading(false)
+    }
   }
 
   const handleInputChange = (e) => {
@@ -45,23 +58,24 @@ const LoginPage = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Tabs defaultValue="admin" className="w-full">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="admin" className="flex items-center gap-2">
-                <Settings className="w-4 h-4" />
-                Admin
-              </TabsTrigger>
-              <TabsTrigger value="client" className="flex items-center gap-2">
-                <Users className="w-4 h-4" />
-                Client
-              </TabsTrigger>
+              <TabsTrigger value="login">Sign In</TabsTrigger>
+              <TabsTrigger value="register">Register</TabsTrigger>
             </TabsList>
             
-            <TabsContent value="admin" className="space-y-4 mt-6">
+            {error && (
+              <Alert variant="destructive" className="mt-4">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
+            
+            <TabsContent value="login" className="space-y-4 mt-6">
               <div className="space-y-2">
-                <Label htmlFor="admin-email">Email</Label>
+                <Label htmlFor="login-email">Email</Label>
                 <Input
-                  id="admin-email"
+                  id="login-email"
                   name="email"
                   type="email"
                   placeholder="admin@example.com"
@@ -70,9 +84,9 @@ const LoginPage = () => {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="admin-password">Password</Label>
+                <Label htmlFor="login-password">Password</Label>
                 <Input
-                  id="admin-password"
+                  id="login-password"
                   name="password"
                   type="password"
                   placeholder="Enter your password"
@@ -82,48 +96,76 @@ const LoginPage = () => {
               </div>
               <Button 
                 className="w-full" 
-                onClick={() => handleLogin('admin')}
-                disabled={loading}
+                onClick={() => handleLogin()}
+                disabled={loading || !credentials.email || !credentials.password}
               >
-                {loading ? 'Signing in...' : 'Sign in as Admin'}
+                {loading ? 'Signing in...' : 'Sign In'}
               </Button>
             </TabsContent>
             
-            <TabsContent value="client" className="space-y-4 mt-6">
+            <TabsContent value="register" className="space-y-4 mt-6">
               <div className="space-y-2">
-                <Label htmlFor="client-email">Email</Label>
+                <Label htmlFor="register-name">Full Name</Label>
                 <Input
-                  id="client-email"
+                  id="register-name"
+                  name="name"
+                  type="text"
+                  placeholder="John Doe"
+                  value={credentials.name}
+                  onChange={handleInputChange}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="register-email">Email</Label>
+                <Input
+                  id="register-email"
                   name="email"
                   type="email"
-                  placeholder="client@example.com"
+                  placeholder="john@example.com"
                   value={credentials.email}
                   onChange={handleInputChange}
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="client-password">Password</Label>
+                <Label htmlFor="register-password">Password</Label>
                 <Input
-                  id="client-password"
+                  id="register-password"
                   name="password"
                   type="password"
-                  placeholder="Enter your password"
+                  placeholder="Create a password"
                   value={credentials.password}
                   onChange={handleInputChange}
                 />
               </div>
-              <Button 
-                className="w-full" 
-                onClick={() => handleLogin('client')}
-                disabled={loading}
-              >
-                {loading ? 'Signing in...' : 'Sign in as Client'}
-              </Button>
+              
+              <div className="space-y-2">
+                <Label>Register as:</Label>
+                <div className="grid grid-cols-2 gap-2">
+                  <Button 
+                    variant="outline"
+                    onClick={() => handleRegister('admin')}
+                    disabled={loading || !credentials.email || !credentials.password || !credentials.name}
+                    className="flex items-center gap-2"
+                  >
+                    <Settings className="w-4 h-4" />
+                    Admin
+                  </Button>
+                  <Button 
+                    variant="outline"
+                    onClick={() => handleRegister('client')}
+                    disabled={loading || !credentials.email || !credentials.password || !credentials.name}
+                    className="flex items-center gap-2"
+                  >
+                    <Users className="w-4 h-4" />
+                    Client
+                  </Button>
+                </div>
+              </div>
             </TabsContent>
           </Tabs>
           
           <div className="mt-6 text-center text-sm text-muted-foreground">
-            <p>Demo credentials: any email/password combination</p>
+            <p>Powered by Appwrite Backend</p>
           </div>
         </CardContent>
       </Card>
@@ -132,4 +174,3 @@ const LoginPage = () => {
 }
 
 export default LoginPage
-

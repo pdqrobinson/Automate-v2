@@ -1,87 +1,57 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
-import { useState, createContext, useContext } from 'react'
+import { AuthProvider, useAuth } from './hooks/useAuth'
 import AdminDashboard from './components/AdminDashboard'
 import ClientDashboard from './components/ClientDashboard'
 import LoginPage from './components/LoginPage'
+import LoadingSpinner from './components/LoadingSpinner'
 import './App.css'
 
-// Auth Context
-const AuthContext = createContext()
+function AppContent() {
+  const { user, userProfile, loading, isImpersonating } = useAuth()
 
-export const useAuth = () => {
-  const context = useContext(AuthContext)
-  if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider')
+  if (loading) {
+    return <LoadingSpinner />
   }
-  return context
+
+  const isAdmin = userProfile?.role === 'admin'
+  const isClient = userProfile?.role === 'client' || isImpersonating
+
+  return (
+    <Router>
+      <div className="min-h-screen bg-background">
+        <Routes>
+          <Route 
+            path="/login" 
+            element={!user ? <LoginPage /> : <Navigate to={isAdmin ? '/admin' : '/client'} />} 
+          />
+          <Route 
+            path="/admin/*" 
+            element={user && isAdmin ? <AdminDashboard /> : <Navigate to="/login" />} 
+          />
+          <Route 
+            path="/client/*" 
+            element={user && isClient ? <ClientDashboard /> : <Navigate to="/login" />} 
+          />
+          <Route 
+            path="/" 
+            element={
+              user ? 
+                <Navigate to={isAdmin ? '/admin' : '/client'} /> : 
+                <Navigate to="/login" />
+            } 
+          />
+        </Routes>
+      </div>
+    </Router>
+  )
 }
 
 function App() {
-  const [user, setUser] = useState(null)
-  const [isImpersonating, setIsImpersonating] = useState(false)
-  const [impersonatedClient, setImpersonatedClient] = useState(null)
-
-  const login = (userData) => {
-    setUser(userData)
-  }
-
-  const logout = () => {
-    setUser(null)
-    setIsImpersonating(false)
-    setImpersonatedClient(null)
-  }
-
-  const startImpersonation = (clientData) => {
-    setIsImpersonating(true)
-    setImpersonatedClient(clientData)
-  }
-
-  const stopImpersonation = () => {
-    setIsImpersonating(false)
-    setImpersonatedClient(null)
-  }
-
-  const authValue = {
-    user,
-    isImpersonating,
-    impersonatedClient,
-    login,
-    logout,
-    startImpersonation,
-    stopImpersonation
-  }
-
   return (
-    <AuthContext.Provider value={authValue}>
-      <Router>
-        <div className="min-h-screen bg-background">
-          <Routes>
-            <Route 
-              path="/login" 
-              element={!user ? <LoginPage /> : <Navigate to={user.role === 'admin' ? '/admin' : '/client'} />} 
-            />
-            <Route 
-              path="/admin/*" 
-              element={user && user.role === 'admin' ? <AdminDashboard /> : <Navigate to="/login" />} 
-            />
-            <Route 
-              path="/client/*" 
-              element={user && (user.role === 'client' || isImpersonating) ? <ClientDashboard /> : <Navigate to="/login" />} 
-            />
-            <Route 
-              path="/" 
-              element={
-                user ? 
-                  <Navigate to={user.role === 'admin' ? '/admin' : '/client'} /> : 
-                  <Navigate to="/login" />
-              } 
-            />
-          </Routes>
-        </div>
-      </Router>
-    </AuthContext.Provider>
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
   )
 }
 
 export default App
-
